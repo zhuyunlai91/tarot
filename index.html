@@ -58,6 +58,11 @@
             height: 120px;
         }
 
+        #chatBoxContainer p {
+            margin-bottom: 16px; /* 调整段落间距 */
+            text-indent: 2em;    /* 首行缩进 */
+        }
+
         /* 复制上面代码中的样式部分 */
         .overlay {
             position: fixed;
@@ -339,13 +344,14 @@
 </main>
 
 <script>
-    const API_BASE_URL = 'https://x-games-tmp.socialsagents.com/api';
+    const API_BASE_URL = 'http://10.17.64.190:8080/v1';
     const APP_ID = 3;
     const APP_USER_ID = "zhu";
 
     function callDayTarotDivinationWithPopup() {
         clearChatBox(); // 清除聊天框
         clearSelectedCard(); // 清除之前显示的牌
+        clearCachedCards(); // 清除缓存的牌信息
         fetch(`${API_BASE_URL}/tarot/day`, {
             method: 'POST',
             headers: {
@@ -573,10 +579,21 @@
             return v.toString(16);
         });
     }
+    function clearCachedCards() {
+        // 清除缓存的塔罗牌信息
+        selectedCardInfos = [];
+        selectedCardsData = [];
+        namesOfSelectedCards = [];
+        num = 0;
+        divinationId = '';
+        // 如果有其他缓存的牌信息变量，也在这里清除
+    }
+
 
     function openSingleCardPopup() {
         clearChatBox(); // 清除聊天框
         clearSelectedCard(); // 清除之前显示的牌
+        clearCachedCards(); // 清除缓存的牌信息
         openPopup(); // 打开牌选择弹窗
         isTripleSelection = false;
 
@@ -592,6 +609,7 @@
     function openTripleCardPopup() {
         clearChatBox(); // 清除聊天框
         clearSelectedCard(); // 清除之前显示的牌
+        clearCachedCards(); // 清除缓存的牌信息
         openPopup(); // 打开牌选择弹窗
         isTripleSelection = true;
         selectedCards = []; // 重置已选牌数组
@@ -810,24 +828,48 @@
         const textContainer = document.createElement('div');
         textContainer.id = 'chatBoxText';
 
-        // 将文本容器添加到聊天框容器
-        chatBoxContainer.appendChild(textContainer);
-
         // 将聊天框容器添加到 body
         document.body.appendChild(chatBoxContainer);
+
+        /// 将文本按段落分割
+        const paragraphs = text.split(/\n\s*\n/); // 按两个或多个连续的换行符分割
+
+        let paragraphIndex = 0;
+
+        function displayNextParagraph() {
+            if (paragraphIndex < paragraphs.length) {
+                const paragraphText = paragraphs[paragraphIndex].trim();
+                const paragraphElement = document.createElement('p');
+                chatBoxContainer.appendChild(paragraphElement);
+
+                // 开始逐字输出当前段落
+                typeWriterEffect(paragraphElement, paragraphText, 0, () => {
+                    // 当前段落输出完毕，等待一会儿后显示下一个段落
+                    paragraphIndex++;
+                    setTimeout(displayNextParagraph, 500); // 段落之间的停顿时间
+                });
+            }
+        }
+
+        // 开始显示第一个段落
+        displayNextParagraph();
 
         // 开始打字特效
         typeWriterEffect(textContainer, text, 0);
     }
-    function typeWriterEffect(element, text, index) {
-        if (index < text.length) {
-            element.innerHTML += text.charAt(index);
-            index++;
+    function typeWriterEffect(element, text, charIndex, callback) {
+        if (charIndex < text.length) {
+            element.textContent += text.charAt(charIndex);
+            charIndex++;
             setTimeout(() => {
-                typeWriterEffect(element, text, index);
+                typeWriterEffect(element, text, charIndex, callback);
             }, 50); // 调整速度，数值越小速度越快
+        } else {
+            // 当前段落输出完毕，调用回调函数
+            if (callback) callback();
         }
     }
+
     function clearChatBox() {
         let existingChatBox = document.getElementById('chatBoxContainer');
         if (existingChatBox) {
