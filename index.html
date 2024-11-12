@@ -100,6 +100,28 @@
             margin: 0 -25px;
             transform-origin: bottom center;
         }
+        .tarot-formal-card-container {
+            display: inline-block; /* 让容器显示为块级元素并保证它们在同一行 */
+            text-align: center; /* 保证文字居中 */
+            margin: 0 15px; /* 调整图片之间的间距 */
+        }
+
+        .tarot-formal-card {
+            width: 160px;
+            height: 240px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+        }
+
+        .tarot-text {
+            margin-top: 10px; /* 给文字和图片留出一定的间隙 */
+            font-size: 14px; /* 可根据需要调整字体大小 */
+        }
+
         /* 悬停选中效果 */
         .tarot-card:hover {
             transform: scale(1.2) translateY(-20px);
@@ -216,7 +238,6 @@
             cursor: pointer;
             font-size: 14px;
         }
-
     </style>
 
 </head>
@@ -265,29 +286,40 @@
         </div>
 
         <!-- Card Preview -->
-        <div id="cardPreview" class="mt-10 w-32 h-48 bg-purple-800 rounded-lg flex items-center justify-center shadow-lg cursor-pointer" onclick="openTarotPopup(); callDayTarotDivination()">
+        <div id="cardPreview" class="mt-10 w-32 h-48 bg-purple-800 rounded-lg flex items-center justify-center shadow-lg cursor-pointer" onclick="openTarotPopup()">
             <!-- 卡片预览区域，紫色背景，带阴影，卡片大小为32x48 -->
             <img src="https://yidui-pai-test.oss-cn-beijing.aliyuncs.com/auto_test/20241107184730.png" alt="Card Icon" class="rounded-lg">
             <!-- 卡片图标，占位符图片显示"卡片"文字 -->
         </div>
 
+        <!-- 弹窗选择塔罗牌 -->
         <div id="tarotModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
-            <div class="bg-white p-6 rounded-lg w-96 shadow-lg">
-                <h2 class="text-center text-xl font-semibold mb-4">选择塔罗牌</h2>
+            <div class="bg-blue-10 rounded-lg w-96 h-120 shadow-lg relative">
+                <!-- 关闭按钮 -->
+                <button class="absolute top-2 right-2 text-gray-100 hover:text-gray-300 font-bold text-xl" onclick="closeTarotPopup()">&times;</button>
 
-                <!-- 经典塔罗牌 -->
-                <div class="tarot-card mb-4">
-                    <img src="https://yidui-pai-test.oss-cn-beijing.aliyuncs.com/auto_test/20241101181232.jpeg" alt="经典塔罗牌" class="w-full h-48 object-cover rounded-lg cursor-pointer" onclick="selectTarot(1)">
-                    <p class="text-center mt-2">经典塔罗牌</p>
-                </div>
+                <h2 class="text-center text-2xl font-semibold text-green-100 mb-6">选择塔罗牌</h2>
 
-                <!-- 猫咪塔罗牌 -->
-                <div class="tarot-card">
-                    <img src="https://yidui-pai-test.oss-cn-beijing.aliyuncs.com/auto_test/20241105112639.jpeg" alt="猫咪塔罗牌" class="w-full h-48 object-cover rounded-lg cursor-pointer" onclick="selectTarot(2)">
-                    <p class="text-center mt-2">猫咪塔罗牌</p>
+                <!-- 塔罗牌容器 -->
+                <div class="flex justify-around space-x-6">
+                    <!-- 经典塔罗牌 -->
+                    <div class="tarot-formal-card-container text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                        <div class="tarot-formal-card" onclick="selectTarot(1)" style="background-image: url('https://yidui-pai-test.oss-cn-beijing.aliyuncs.com/auto_test/20241101181232.jpeg');"></div>
+                        <p class="tarot-text text-blue-100">经典塔罗牌</p>
+                    </div>
+
+                    <!-- 猫咪塔罗牌 -->
+                    <div class="tarot-formal-card-container text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                        <div class="tarot-formal-card" onclick="selectTarot(2)" style="background-image: url('https://yidui-pai-test.oss-cn-beijing.aliyuncs.com/auto_test/20241105112639.jpeg');"></div>
+                        <p class="tarot-text text-green-100">猫咪塔罗牌</p>
+                    </div>
+
+
                 </div>
             </div>
         </div>
+
+
 
         <!-- 弹窗 -->
         <div class="overlay" id="tarotOverlay">
@@ -421,25 +453,6 @@
         if (popup) {
             popup.remove();
         }
-    }
-
-
-    function callDayTarotDivination() {
-        fetch(`${API_BASE_URL}/tarot/day`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ app_id: APP_ID, app_user_id: APP_USER_ID })
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('DayTarotDivination response:', data);
-                // 处理API响应数据
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
     }
 
     function callGenerateRecommendQuestion(category) {
@@ -588,6 +601,8 @@
     let selectedCardsData =[];
     let namesOfSelectedCards = [];
     let selectedCardInfos = [];
+    // 存储当前选择的塔罗牌类型（1：经典塔罗牌，2：猫咪塔罗牌）
+    let selectedTarotType = 1;
 
     function generateUUID() {
         // 生成UUID
@@ -604,7 +619,6 @@
         namesOfSelectedCards = [];
         num = 0;
         divinationId = '';
-        selectedTarotType = 1; // 默认为单牌
         // 如果有其他缓存的牌信息变量，也在这里清除
     }
 
@@ -648,7 +662,7 @@
         // 准备请求参数
         let nameParam = namesOfSelectedCards.join(',');
         if (nameParam === '') nameParam = null;
-
+        console.log("----",selectedTarotType)
         let requestBody = {
             app_id: APP_ID,
             app_user_id: APP_USER_ID,
@@ -897,14 +911,9 @@
         }
     }
 
-
-    // 存储当前选择的塔罗牌类型（1：经典塔罗牌，2：猫咪塔罗牌）
-    let selectedTarotType = 1;
-
     // 打开弹窗
     function openTarotPopup() {
-        const modal = document.getElementById('tarotModal');
-        modal.classList.remove('hidden'); // 显示弹窗
+        document.getElementById('tarotModal').style.display = 'flex';
     }
 
     // 选择塔罗牌类型
@@ -913,14 +922,12 @@
         console.log('选择的塔罗牌类型:', selectedTarotType);
 
         // 关闭弹窗
-        const modal = document.getElementById('tarotModal');
-        modal.classList.add('hidden');
+        closeTarotPopup()
     }
 
     // 关闭弹窗
     function closeTarotPopup() {
-        const modal = document.getElementById('tarotModal');
-        modal.classList.add('hidden');
+        document.getElementById('tarotModal').style.display = 'none';
     }
 
 
