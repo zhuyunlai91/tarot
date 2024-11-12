@@ -456,24 +456,33 @@
     }
 
     function callGenerateRecommendQuestion(category) {
-        fetch(`${API_BASE_URL}/GenerateRecommendQuestion`, {
+        fetch(`${API_BASE_URL}/tarot/question`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ app_id: APP_ID, app_user_id: APP_USER_ID, category: category })
+            body: JSON.stringify({ app_id: APP_ID, app_user_id: APP_USER_ID, classify: category })
         })
             .then(response => response.json())
             .then(data => {
-                if (Array.isArray(data) && data.length > 0) {
-                    console.log('Recommended Question:', data[0]);
-                    // 处理推荐问题（只取第一个）
+                if (Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+                    console.log('Recommended Question:', data.recommendations[0]);
+                    // 将第一个推荐问题显示在输入框中
+                    const inputElement = document.getElementById('prediction-input');
+                    if (inputElement) {
+                        inputElement.value = data.recommendations[0];
+                    } else {
+                        console.error('找不到 id 为 "prediction-input" 的输入框');
+                    }
+                } else {
+                    console.warn('未获取到推荐问题');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
             });
     }
+
 
     function displayTriangleGroup() {
         const container = document.getElementById('selectedCardContainer');
