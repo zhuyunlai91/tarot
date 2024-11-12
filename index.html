@@ -456,6 +456,9 @@
     }
 
     function callGenerateRecommendQuestion(category) {
+        clearChatBox(); // 清除聊天框
+        clearSelectedCard(); // 清除之前显示的牌
+        clearCachedCards(); // 清除缓存的牌信息
         fetch(`${API_BASE_URL}/tarot/question`, {
             method: 'POST',
             headers: {
@@ -850,9 +853,9 @@
 
         // 创建聊天框容器
         const chatBoxContainer = document.createElement('div');
-        chatBoxContainer.id = 'chatBoxContainer';
-        chatBoxContainer.style.position = 'fixed';
-        chatBoxContainer.style.bottom = '20px';
+        chatBoxContainer.id = 'chatBoxContainer'; // 设置id
+        chatBoxContainer.style.position = 'fixed'; // 固定定位
+        chatBoxContainer.style.bottom = '100px'; // 距离底部20px
         chatBoxContainer.style.left = '50%';
         chatBoxContainer.style.transform = 'translateX(-50%)';
         chatBoxContainer.style.width = '80%';
@@ -863,7 +866,7 @@
         chatBoxContainer.style.borderRadius = '10px';
         chatBoxContainer.style.zIndex = '1000';
         chatBoxContainer.style.overflowY = 'auto';
-        chatBoxContainer.style.maxHeight = '50vh';
+        chatBoxContainer.style.maxHeight = '40vh';
         chatBoxContainer.style.fontSize = '16px';
         chatBoxContainer.style.lineHeight = '1.5';
 
@@ -906,7 +909,7 @@
             charIndex++;
             setTimeout(() => {
                 typeWriterEffect(element, text, charIndex, callback);
-            }, 50); // 调整速度，数值越小速度越快
+            }, 30); // 调整速度，数值越小速度越快
         } else {
             // 当前段落输出完毕，调用回调函数
             if (callback) callback();
