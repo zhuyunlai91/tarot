@@ -373,10 +373,9 @@
         fetch(`${API_BASE_URL}/tarot/day`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'tarot-type': selectedTarotType  // 根据选择的塔罗牌类型设置tarot-type参数
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ app_id: APP_ID, app_user_id: APP_USER_ID })
+            body: JSON.stringify({ app_id: APP_ID, app_user_id: APP_USER_ID, tarot_type: selectedTarotType })
         })
             .then(response => response.json())
             .then(data => {
@@ -605,6 +604,7 @@
         namesOfSelectedCards = [];
         num = 0;
         divinationId = '';
+        selectedTarotType = 1; // 默认为单牌
         // 如果有其他缓存的牌信息变量，也在这里清除
     }
 
@@ -655,14 +655,14 @@
             name: nameParam,
             divination_type: divinationType,
             divination_id: divinationId,
+            tarot_type: selectedTarotType,
             num: num
         };
 
         fetch(`${API_BASE_URL}/tarot/random_one`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'tarot-type': selectedTarotType  // 根据选择的塔罗牌类型设置tarot-type参数
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(requestBody)
         })
@@ -754,8 +754,7 @@
         return fetch(`${API_BASE_URL}/tarot/random_one`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'tarot-type': selectedTarotType  // 根据选择的塔罗牌类型设置tarot-type参数
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 app_id: APP_ID,
@@ -801,8 +800,7 @@
         fetch(`${API_BASE_URL}/tarot/divination`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'tarot-type': selectedTarotType  // 根据选择的塔罗牌类型设置tarot-type参数
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(requestBody)
         })
