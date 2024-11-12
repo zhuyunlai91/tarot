@@ -922,6 +922,9 @@
 
     // 打开弹窗
     function openTarotPopup() {
+        clearChatBox(); // 清除聊天框
+        clearSelectedCard(); // 清除之前显示的牌
+        clearCachedCards(); // 清除缓存的牌信息
         document.getElementById('tarotModal').style.display = 'flex';
     }
 
