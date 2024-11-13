@@ -149,6 +149,16 @@
             cursor: grab;
         }
 
+        /* 查看大图的链接 */
+        .view-large {
+            display: block;
+            text-align: center;
+            margin-top: 200px;
+            color: rgba(0, 0, 0, 0.51);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
         .triangle-group .card1 {
             position: absolute;
             bottom: 0;
@@ -300,7 +310,6 @@
 
                 <h2 class="text-center text-2xl font-semibold text-green-100 mb-6">选择塔罗牌类型</h2>
                 <p class="text-center tarot-text text-blue-100 mb-6">更多塔罗牌类型陆续添加中，敬请期待。。。</p>
-
                 <!-- 塔罗牌容器 -->
                 <div class="flex justify-around space-x-6">
                     <!-- 经典塔罗牌 -->
@@ -458,8 +467,6 @@
 
     function callGenerateRecommendQuestion(category) {
         clearChatBox(); // 清除聊天框
-        clearSelectedCard(); // 清除之前显示的牌
-        clearCachedCards(); // 清除缓存的牌信息
         fetch(`${API_BASE_URL}/tarot/question`, {
             method: 'POST',
             headers: {
@@ -544,6 +551,20 @@
             card.style.width = '80px';
             card.style.height = '140px';
             card.style.borderRadius = '8px';
+        }else {
+            // 如果是单牌模式，添加“查看大图”链接
+            const viewLink = document.createElement('a');
+            viewLink.href = 'javascript:void(0);';
+            viewLink.classList.add('view-large');
+            viewLink.textContent = '查看大图';
+
+            // 监听点击事件，展示大图弹窗
+            viewLink.addEventListener('click', function () {
+                openImageInNewWindow(imageUrl);
+            });
+
+            // 将“查看大图”链接添加到塔罗牌元素
+            card.appendChild(viewLink)
         }
         return card;
     }
@@ -945,7 +966,44 @@
     function closeTarotPopup() {
         document.getElementById('tarotModal').style.display = 'none';
     }
+    function openImageInNewWindow(imageUrl) {
+        // 创建一个新的窗口，指定大小和位置
+        const width = 800;  // 新窗口的宽度
+        const height = 600; // 新窗口的高度
+        const left = (window.innerWidth - width) / 2; // 屏幕居中
+        const top = (window.innerHeight - height) / 2; // 屏幕居中
 
+        const newWindow = window.open('', '_blank', `width=${width},height=${height},left=${left},top=${top}`);
+
+        if (newWindow) {
+            // 向新窗口写入HTML内容
+            newWindow.document.write(`
+            <html>
+                <head>
+                    <title>查看大图</title>
+                    <style>
+                        body {
+                            margin: 0;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 100vh;
+                            background-color: #000;
+                        }
+                        img {
+                            max-width: 100%;
+                            max-height: 100%;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img src="${imageUrl}" alt="Tarot Card">
+                </body>
+            </html>
+        `);
+            newWindow.document.close();  // 关闭文档流
+        }
+    }
 
 </script>
 
