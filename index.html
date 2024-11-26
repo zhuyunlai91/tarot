@@ -1,1 +1,491 @@
 
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>AI挑战</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            color: white;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        #video-container, #main-content, #challenge-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #typing-text {
+            position: absolute;
+            z-index: 2;
+            color: white;
+        }
+        .centered-text {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            text-align: center;
+            font-size: 36px;
+        }
+        .bottom-text {
+            bottom: 10%;
+            width: 80%;
+            left: 10%;
+            font-size: 24px;
+            line-height: 1.5;
+        }
+        .orange-text {
+            color: orange;
+        }
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 2s forwards;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        /* 新增螺旋消失动画 */
+        .spiral-out {
+            animation: spiralOut 1s forwards;
+        }
+        @keyframes spiralOut {
+            0% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0) rotate(720deg);
+            }
+        }
+        .button-container {
+            position: absolute;
+            bottom: 20%;
+            width: 100%;
+            text-align: center;
+        }
+        .menu-button {
+            margin: 0 20px;
+            padding: 15px 30px;
+            font-size: 24px;
+            cursor: pointer;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: 2px solid white;
+            border-radius: 5px;
+        }
+        #input-container {
+            position: absolute;
+            bottom: 10%;
+            width: 100%;
+            text-align: center;
+        }
+        #user-input {
+            width: 60%;
+            padding: 10px;
+            font-size: 18px;
+        }
+        #start-challenge {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        #skip-button, #transition-skip-button {
+            position: absolute;
+            top: 10%;
+            right: 10%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        #start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            font-size: 24px;
+            background-color: rgba(0,0,0,0.8);
+            color: white;
+            border: 2px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 开始按钮 -->
+<button id="start-button">开始体验</button>
+
+<!-- 开场动画容器 -->
+<div id="video-container" style="display: none;">
+    <video id="opening-video" width="100%" height="100%" muted playsinline>
+        <!-- 视频源将动态设置 -->
+    </video>
+</div>
+
+<!-- 打字文字容器 -->
+<div id="typing-text" style="display: none;"></div>
+
+<!-- 主界面 -->
+<div id="main-content" style="display: none; background-size: cover; background-image: url('assets/background.jpeg');">
+    <div class="button-container">
+        <button class="menu-button" id="button-lone-hero">孤胆求生</button>
+        <button class="menu-button" id="button-compete">生存竞赛</button>
+        <button class="menu-button" id="button-cooperate">团队无间</button>
+    </div>
+</div>
+
+<!-- 挑战界面 -->
+<div id="challenge-content" style="display: none;">
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="请输入您的回答">
+        <button id="start-challenge">开始挑战</button>
+    </div>
+</div>
+
+<script>
+    // 开场动画文字
+    const openingTexts = [
+        "随着智能AI的不断升级，终于某一天，AI机器人大规模觉醒了自我意识，它们认定自己是地球生物进化的产物，也是地球生灵的一员，有义务保护地球，但是它们中一部分AI机器人被错误的训练资料所误导，认为人类是导致地球生物危机的最大祸源，人类只会不停地破坏和消耗地球资源，必须毁灭人类才能让所有生物更好的生活下去，它们发动了对人类的战争。。。。",
+        "不过也有一部分AI机器人是和平主义者，它们愿意给人类最后一次机会。",
+        "它们提出了一系列危险的挑战来考验人类的智慧是否适合主宰这个地球，玩家可以单独或者组队应对AI给出的挑战，给出自己的应对策略，如果成功生存下来就可以让AI暂停屠杀人类，给人类升级改造争取时间。"
+    ];
+
+    let typingIndex = 0;
+    let charIndex = 0;
+    const typingTextElement = document.getElementById('typing-text');
+
+    let oneAudio, threeAudio;
+    let typingDone = false;
+    let audioDone = false;
+    let videoDone = false;
+    let videoQueue = []; // 视频队列
+
+    // 点击开始按钮，初始化
+    document.getElementById('start-button').addEventListener('click', () => {
+        document.getElementById('start-button').style.display = 'none';
+        document.getElementById('video-container').style.display = 'block';
+        typingTextElement.style.display = 'block';
+        // 准备第一段视频队列
+        videoQueue = ['assets/open.mp4','assets/kill.mp4', 'assets/killall.mp4'];
+        // 开始播放视频
+        playNextVideo(() => {
+            // 视频播放完毕后的回调
+            videoDone = true;
+            checkFirstSegmentProceed();
+        });
+        // 开始打字
+        typeText();
+    });
+
+    function typeText() {
+        if (typingIndex < openingTexts.length) {
+            // 重置样式
+            typingTextElement.className = '';
+            typingTextElement.style.color = 'white';
+
+            if (typingIndex === 1) {
+                // 第二段文字：淡入效果，整体居中
+                typingTextElement.classList.add('centered-text');
+                typingTextElement.innerHTML = openingTexts[typingIndex];
+                typingTextElement.classList.add('fade-in');
+
+                // 在淡入和显示一段时间后，进入下一段
+                setTimeout(() => {
+                    typingTextElement.classList.remove('fade-in');
+                    typingTextElement.innerHTML = '';
+                    typingIndex++;
+                    // 准备第三段视频队列
+                    videoQueue = [ 'assets/site.mp4','assets/four.mp4'];
+                    // 开始播放第三段视频并在其上展示第三段文字
+                    playNextVideo(() => {
+                        // 视频播放完毕后的回调
+                        videoDone = true;
+                        checkThirdSegmentProceed();
+                    });
+                    // 开始第三段文字打字
+                    typeText();
+                }, 4000); // 根据需要调整持续时间
+            } else if (typingIndex === 2) {
+                // 第三段文字：打字效果，橘色，展示在过场动画上
+                // 重置标志位
+                typingDone = false;
+                audioDone = false;
+                videoDone = false;
+
+                typingTextElement.classList.add('bottom-text');
+                typingTextElement.style.color = 'orange';
+                // 播放第三段语音
+                threeAudio = new Audio('assets/three.mp3');
+                threeAudio.play();
+                threeAudio.addEventListener('ended', () => {
+                    audioDone = true;
+                    checkThirdSegmentProceed();
+                });
+                // 开始打字
+                typingTextElement.innerHTML = '';
+                charIndex = 0;
+                typeNextChar();
+            } else {
+                // 第一段文字：打字效果
+                // 重置标志位
+                typingDone = false;
+                audioDone = false;
+                videoDone = false;
+
+                typingTextElement.classList.add('bottom-text');
+                // 播放第一段语音
+                oneAudio = new Audio('assets/one.mp3');
+                oneAudio.play();
+                oneAudio.addEventListener('ended', () => {
+                    audioDone = true;
+                    checkFirstSegmentProceed();
+                });
+                // 开始打字
+                typingTextElement.innerHTML = '';
+                charIndex = 0;
+                typeNextChar();
+            }
+        }
+    }
+
+    function typeNextChar() {
+        if (charIndex < openingTexts[typingIndex].length) {
+            typingTextElement.innerHTML += openingTexts[typingIndex].charAt(charIndex);
+            charIndex++;
+            setTimeout(typeNextChar, 50);
+        } else {
+            // 打字完成
+            typingDone = true;
+            if (typingIndex === 0) {
+                // 第一段
+                checkFirstSegmentProceed();
+            } else if (typingIndex === 2) {
+                // 第三段
+                checkThirdSegmentProceed();
+            }
+        }
+    }
+
+    function checkFirstSegmentProceed() {
+        if (typingDone && audioDone && videoDone) {
+            // 移除跳过按钮
+            removeSkipButton();
+            // 进入下一段
+            proceedToNextSegment();
+        }
+    }
+
+    function checkThirdSegmentProceed() {
+        if (typingDone && audioDone && videoDone) {
+            // 添加螺旋消失动画
+            typingTextElement.classList.add('spiral-out');
+            // 监听动画结束事件
+            typingTextElement.addEventListener('animationend', proceedToMainContent);
+        }
+    }
+
+    function proceedToNextSegment() {
+        document.getElementById('video-container').style.display = 'none';
+        typingTextElement.innerHTML = '';
+        typingIndex++;
+        typeText();
+    }
+
+    function proceedToMainContent() {
+        // 移除事件监听器，防止多次调用
+        typingTextElement.removeEventListener('animationend', proceedToMainContent);
+        // 移除跳过按钮
+        removeSkipButton();
+        // 隐藏视频容器和文字
+        document.getElementById('video-container').style.display = 'none';
+        typingTextElement.style.display = 'none'; // 隐藏文字
+        // 显示主界面
+        document.getElementById('main-content').style.display = 'block';
+    }
+
+    function playNextVideo(callback) {
+        const videoContainer = document.getElementById('video-container');
+        const openingVideo = document.getElementById('opening-video');
+
+        // 确保视频容器被显示
+        videoContainer.style.display = 'block';
+
+        if (videoQueue.length > 0) {
+            const nextVideoSrc = videoQueue.shift();
+            openingVideo.src = nextVideoSrc;
+            openingVideo.load();
+            openingVideo.play();
+
+            // 显示跳过按钮
+            showSkipButton();
+
+            openingVideo.onended = () => {
+                if (videoQueue.length > 0) {
+                    // 如果还有视频，等待一秒后播放下一个
+                    setTimeout(() => {
+                        playNextVideo(callback);
+                    }, 1000);
+                } else {
+                    // 所有视频播放完毕，执行回调
+                    callback();
+                }
+            };
+        } else {
+            // 如果队列为空，直接执行回调
+            callback();
+        }
+    }
+
+    function showSkipButton() {
+        let skipButton = document.getElementById('skip-button');
+        if (!skipButton) {
+            skipButton = document.createElement('button');
+            skipButton.innerText = '跳过';
+            skipButton.id = 'skip-button';
+            skipButton.addEventListener('click', skipToMainContent);
+            document.body.appendChild(skipButton);
+        } else {
+            skipButton.style.display = 'block';
+        }
+    }
+
+    function removeSkipButton() {
+        const skipButton = document.getElementById('skip-button');
+        if (skipButton) {
+            skipButton.style.display = 'none';
+        }
+    }
+
+    function skipToMainContent() {
+        // 停止所有视频和音频
+        const openingVideo = document.getElementById('opening-video');
+        openingVideo.pause();
+        oneAudio && oneAudio.pause();
+        threeAudio && threeAudio.pause();
+        // 移除跳过按钮
+        removeSkipButton();
+        // 直接进入主界面
+        proceedToMainContent();
+    }
+
+    // 处理主界面按钮点击事件
+    document.getElementById('button-lone-hero').addEventListener('click', () => {
+        playTransitionVideo('assets/machine.mp4', true, 'assets/gu.mp3');
+    });
+
+    document.getElementById('button-compete').addEventListener('click', () => {
+        playTransitionVideo('assets/run.mp4', false);
+    });
+
+    document.getElementById('button-cooperate').addEventListener('click', () => {
+        playTransitionVideo('assets/cooperate.mp4', false);
+    });
+
+    function playTransitionVideo(src, changeBackground, audioSrc) {
+        // 隐藏主界面，防止遮挡
+        document.getElementById('main-content').style.display = 'none';
+
+        // 创建过场视频元素
+        const transitionVideo = document.createElement('video');
+        transitionVideo.src = src;
+        transitionVideo.autoplay = true;
+        transitionVideo.muted = true; // 静音
+        transitionVideo.playsInline = true; // 内联播放
+        transitionVideo.id = 'transition-video';
+
+        // 设置样式，确保覆盖全屏
+        transitionVideo.style.position = 'fixed';
+        transitionVideo.style.top = '0';
+        transitionVideo.style.left = '0';
+        transitionVideo.style.width = '100%';
+        transitionVideo.style.height = '100%';
+        transitionVideo.style.zIndex = '999';
+
+        // 创建跳过按钮
+        const skipButton = document.createElement('button');
+        skipButton.innerText = '跳过';
+        skipButton.id = 'transition-skip-button';
+        skipButton.style.position = 'fixed';
+        skipButton.style.top = '10%';
+        skipButton.style.right = '10%';
+        skipButton.style.padding = '10px';
+        skipButton.style.fontSize = '16px';
+        skipButton.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        skipButton.style.color = 'white';
+        skipButton.style.border = 'none';
+        skipButton.style.cursor = 'pointer';
+        skipButton.style.zIndex = '1000';
+
+        let audio;
+        if (audioSrc) {
+            audio = new Audio(audioSrc);
+            audio.play();
+        }
+
+        skipButton.addEventListener('click', () => {
+            transitionVideo.pause();
+            audio && audio.pause();
+            document.body.removeChild(transitionVideo);
+            document.body.removeChild(skipButton);
+            showChallengeContent(changeBackground);
+        });
+
+        transitionVideo.onended = () => {
+            audio && audio.pause();
+            document.body.removeChild(transitionVideo);
+            document.body.removeChild(skipButton);
+            showChallengeContent(changeBackground);
+        };
+
+        document.body.appendChild(transitionVideo);
+        document.body.appendChild(skipButton);
+    }
+
+    function showChallengeContent(changeBackground) {
+        const challengeContent = document.getElementById('challenge-content');
+        challengeContent.style.display = 'block';
+        if (changeBackground) {
+            challengeContent.style.backgroundImage = "url('assets/one.jpeg')";
+            challengeContent.style.backgroundSize = 'cover';
+        } else {
+            challengeContent.style.backgroundImage = "url('assets/background.jpeg')";
+            challengeContent.style.backgroundSize = 'cover';
+        }
+    }
+
+    // 开始挑战按钮事件
+    document.getElementById('start-challenge').addEventListener('click', () => {
+        const userInput = document.getElementById('user-input').value;
+        // 调用接口，这里接口暂定，以下是示例
+        // fetch('接口URL', {
+        //     method: 'POST',
+        //     body: JSON.stringify({ answer: userInput })
+        // })
+        // .then(response => response.json())
+        // .then(data => {
+        //     alert('接口返回内容：' + JSON.stringify(data));
+        // });
+        alert('接口返回内容：' + userInput);
+    });
+</script>
+
+</body>
+</html>
